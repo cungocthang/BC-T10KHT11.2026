@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Honda Ô tô Bình Định – Báo cáo T10/2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --red:    #E40521;
+    --navy:   #1A2B5F;
+    --gold:   #F5A623;
+    --green:  #27AE60;
+    --orange: #E67E22;
+    --light:  #F4F6FA;
+    --white:  #FFFFFF;
+    --dark:   #1C2340;
+    --gray:   #6B7280;
+    --border: #DDE3EF;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',sans-serif;background:var(--light);color:var(--dark);}
+
+  /* HEADER */
+  .header{background:linear-gradient(135deg,var(--navy) 0%,#243672 60%,var(--red) 100%);
+    padding:20px 32px;display:flex;align-items:center;justify-content:space-between;}
+  .header-left h1{color:#fff;font-size:22px;font-weight:700;line-height:1.3;}
+  .header-left p{color:rgba(255,255,255,.75);font-size:13px;margin-top:4px;}
+  .header-badge{background:var(--gold);color:#fff;padding:6px 16px;border-radius:20px;
+    font-size:13px;font-weight:700;white-space:nowrap;}
+
+  /* NAV TABS */
+  .tab-nav{background:var(--navy);display:flex;overflow-x:auto;gap:2px;padding:0 16px;}
+  .tab-btn{padding:12px 20px;color:rgba(255,255,255,.65);font-size:13px;font-weight:600;
+    cursor:pointer;border:none;background:transparent;white-space:nowrap;
+    border-bottom:3px solid transparent;transition:.2s;}
+  .tab-btn:hover{color:#fff;}
+  .tab-btn.active{color:#fff;border-bottom-color:var(--gold);}
+
+  /* CONTENT */
+  .tab-content{display:none;padding:20px 24px 32px;}
+  .tab-content.active{display:block;}
+
+  /* KPI ROW */
+  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:20px;}
+  .kpi-card{background:var(--white);border-radius:12px;padding:16px 18px;
+    box-shadow:0 2px 8px rgba(0,0,0,.07);position:relative;overflow:hidden;}
+  .kpi-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--navy);}
+  .kpi-card.red::before{background:var(--red);}
+  .kpi-card.gold::before{background:var(--gold);}
+  .kpi-card.green::before{background:var(--green);}
+  .kpi-card.orange::before{background:var(--orange);}
+  .kpi-label{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+  .kpi-value{font-size:26px;font-weight:800;color:var(--dark);line-height:1;}
+  .kpi-sub{font-size:12px;margin-top:6px;}
+  .kpi-sub .up{color:var(--green);}
+  .kpi-sub .down{color:var(--red);}
+  .kpi-sub .neutral{color:var(--gray);}
+
+  /* GRID PANELS */
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;}
+  @media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr;}}
+
+  .panel{background:var(--white);border-radius:12px;padding:18px 20px;
+    box-shadow:0 2px 8px rgba(0,0,0,.07);}
+  .panel h3{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:14px;
+    padding-bottom:8px;border-bottom:2px solid var(--border);}
+
+  /* TABLE */
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  th{background:var(--navy);color:#fff;padding:8px 10px;text-align:center;font-weight:600;}
+  td{padding:7px 10px;border-bottom:1px solid var(--border);text-align:center;}
+  tr:last-child td{border-bottom:none;}
+  tr:nth-child(even){background:#F8FAFD;}
+  .bold{font-weight:700;background:#EEF2FF !important;}
+  .pct-good{color:var(--green);font-weight:700;}
+  .pct-warn{color:var(--gold);font-weight:700;}
+  .pct-bad{color:var(--red);font-weight:700;}
+
+  /* PROGRESS BAR */
+  .prog-wrap{background:#E5E7EB;border-radius:6px;height:10px;overflow:hidden;margin-top:4px;}
+  .prog-bar{height:100%;border-radius:6px;transition:width .6s ease;}
+  .prog-bar.g{background:var(--green);}
+  .prog-bar.o{background:var(--gold);}
+  .prog-bar.r{background:var(--red);}
+
+  .prog-row{margin-bottom:10px;}
+  .prog-info{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;}
+  .prog-name{font-weight:600;color:var(--dark);}
+
+  /* ALERT */
+  .alert{border-radius:8px;padding:12px 16px;margin-bottom:12px;font-size:13px;line-height:1.6;}
+  .alert.red{background:#FEE2E2;border-left:4px solid var(--red);color:#991B1B;}
+  .alert.gold{background:#FEF9C3;border-left:4px solid var(--gold);color:#92400E;}
+  .alert.green{background:#DCFCE7;border-left:4px solid var(--green);color:#166534;}
+  .alert strong{font-weight:700;}
+
+  /* SECTION TITLE */
+  .sec-title{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:14px;
+    display:flex;align-items:center;gap:8px;}
+  .sec-title::before{content:'';width:4px;height:20px;background:var(--red);border-radius:2px;}
+
+  canvas{max-height:260px;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <h1>🏎 Honda Ô tô Bình Định</h1>
+    <p>DASHBOARD BÁO CÁO KẾT QUẢ HOẠT ĐỘNG THÁNG 10/2026 &amp; KẾ HOẠCH THÁNG 11/2026</p>
+  </div>
+  <div class="header-badge">📅 Tháng 10 / 2026</div>
+</div>
+
+<!-- NAV -->
+<nav class="tab-nav">
+  <button class="tab-btn active" onclick="showTab('tong')">📊 TỔNG QUAN</button>
+  <button class="tab-btn" onclick="showTab('kd')">🚗 KINH DOANH</button>
+  <button class="tab-btn" onclick="showTab('dv')">🔧 DỊCH VỤ</button>
+  <button class="tab-btn" onclick="showTab('cskh')">🤝 CSKH</button>
+  <button class="tab-btn" onclick="showTab('mkt')">📣 MARKETING</button>
+  <button class="tab-btn" onclick="showTab('tt')">🌐 THỊ TRƯỜNG</button>
+  <button class="tab-btn" onclick="showTab('hcns')">👥 HCNS</button>
+  <button class="tab-btn" onclick="showTab('kt')">💰 KẾ TOÁN</button>
+</nav>
+
+<!-- ===================== TỔNG QUAN ===================== -->
+<div id="tab-tong" class="tab-content active">
+  <div class="kpi-row">
+    <div class="kpi-card red">
+      <div class="kpi-label">Bán xe T10</div>
+      <div class="kpi-value">16 xe</div>
+      <div class="kpi-sub"><span class="down">▼ Chỉ tiêu: ~34 xe (103KI)</span></div>
+    </div>
+    <div class="kpi-card gold">
+      <div class="kpi-label">Luỹ kế 10T / KH 103KI</div>
+      <div class="kpi-value">138/310</div>
+      <div class="kpi-sub"><span class="down">▼ 44,5% — cần đẩy mạnh</span></div>
+    </div>
+    <div class="kpi-card navy">
+      <div class="kpi-label">Doanh thu DV 10T</div>
+      <div class="kpi-value">22,8 tỷ</div>
+      <div class="kpi-sub"><span class="up">▲ +46% so CK 2025</span></div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Lượt xe DV T10</div>
+      <div class="kpi-value">593</div>
+      <div class="kpi-sub"><span class="neutral">Đạt 84% chỉ tiêu</span></div>
+    </div>
+    <div class="kpi-card gold">
+      <div class="kpi-label">VIN xe DV T10</div>
+      <div class="kpi-value">418</div>
+      <div class="kpi-sub"><span class="up">▲ Đạt 104,5% KH</span></div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">Nhân sự hiện tại</div>
+      <div class="kpi-value">59 người</div>
+      <div class="kpi-sub"><span class="neutral">Ổn định tháng 10</span></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <h3>📌 Tiến độ chỉ tiêu 103KI – Bán xe theo dòng</h3>
+      <div class="prog-row">
+        <div class="prog-info"><span class="prog-name">City</span><span>47/95 — <b class="pct-warn">49,5%</b></span></div>
+        <div class="prog-wrap"><div class="prog-bar o" style="width:49.5%"></div></div>
+      </div>
+      <div class="prog-row">
+        <div class="prog-info"><span class="prog-name">HR-V</span><span>39/110 — <b class="pct-bad">35,5%</b></span></div>
+        <div class="prog-wrap"><div class="prog-bar r" style="width:35.5%"></div></div>
+      </div>
+      <div class="prog-row">
+        <div class="prog-info"><span class="prog-name">BR-V</span><span>19/60 — <b class="pct-bad">31,7%</b></span></div>
+        <div class="prog-wrap"><div class="prog-bar r" style="width:31.7%"></div></div>
+      </div>
+      <div class="prog-row">
+        <div class="prog-info"><span class="prog-name">CR-V</span><span>32/35 — <b class="pct-good">91,4%</b></span></div>
+        <div class="prog-wrap"><div class="prog-bar g" style="width:91.4%"></div></div>
+      </div>
+      <div class="prog-row">
+        <div class="prog-info"><span class="prog-name">Civic</span><span>1/10 — <b class="pct-bad">10%</b></span></div>
+        <div class="prog-wrap"><div class="prog-bar r" style="width:10%"></div></div>
+      </div>
+      <div class="prog-row">
+        <div class="prog-info"><span class="prog-name"><b>TỔNG (103KI)</b></span><span><b>138/310 — <b class="pct-bad">44,5%</b></b></span></div>
+        <div class="prog-wrap"><div class="prog-bar r" style="width:44.5%"></div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>🚨 Cảnh báo & Điểm cần chú ý</h3>
+      <div class="alert red"><strong>⚠️ Doanh số xe T10 chỉ 16 xe</strong> — rất thấp so với nhu cầu hoàn thành KH 103KI. Còn 5 tháng (T11–T3/27), cần bán ≥34 xe/tháng để về đích.</div>
+      <div class="alert red"><strong>⚠️ Luỹ kế 103KI mới đạt 44,5%</strong> — HR-V, BR-V, Civic tụt hậu nghiêm trọng. Cần chiến dịch kích cầu khẩn cấp.</div>
+      <div class="alert gold"><strong>⚡ Tồn kho 49 xe</strong> — mức cao, cần đẩy hàng tồn, đặc biệt xe tồn &gt;50 ngày (nhiều xe CR-V, HR-V, BRV đen).</div>
+      <div class="alert green"><strong>✅ Dịch vụ tăng trưởng mạnh</strong> — DT 10T/2026 đạt 22,8 tỷ, tăng 46% so CK 2025. VIN đạt 104,5% chỉ tiêu.</div>
+      <div class="alert green"><strong>✅ Marketing hiệu quả</strong> — Facebook đạt 569K lượt xem (gấp 3,3 KH), 28 Lead (gấp 2,5 KH).</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>📊 So sánh thực hiện vs chỉ tiêu các bộ phận – Tháng 10/2026</h3>
+    <canvas id="chartTong"></canvas>
+  </div>
+</div>
+
+<!-- ===================== KINH DOANH ===================== -->
+<div id="tab-kd" class="tab-content">
+  <div class="kpi-row">
+    <div class="kpi-card red">
+      <div class="kpi-label">Bán xe T10</div>
+      <div class="kpi-value">16 xe</div>
+      <div class="kpi-sub"><span class="down">▼ KH: 34 xe (103KI T10)</span></div>
+    </div>
+    <div class="kpi-card gold">
+      <div class="kpi-label">Phụ kiện T10</div>
+      <div class="kpi-value">113 tr</div>
+      <div class="kpi-sub"><span class="down">▼ KH: 160 tr — đạt 70,6%</span></div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Bảo hiểm T10</div>
+      <div class="kpi-value">20 xe</div>
+      <div class="kpi-sub"><span class="up">▲ KH: 16 xe — đạt 125%</span></div>
+    </div>
+    <div class="kpi-card navy">
+      <div class="kpi-label">Lợi nhuận BQ/xe</div>
+      <div class="kpi-value">16,2 tr</div>
+      <div class="kpi-sub"><span class="neutral">BRV L cao nhất: 25 tr/xe</span></div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">Tồn kho cuối T10</div>
+      <div class="kpi-value">49 xe</div>
+      <div class="kpi-sub"><span class="down">▼ Tăng từ 38 đầu kỳ</span></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <h3>🚗 Doanh số xe T10 theo Nhóm</h3>
+      <canvas id="chartNhom"></canvas>
+    </div>
+    <div class="panel">
+      <h3>📈 Tiến độ 103KI theo dòng xe (Luỹ kế 7T)</h3>
+      <canvas id="chartDong"></canvas>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <h3>📋 Chi tiết bán xe T10 theo Sales</h3>
+      <table>
+        <tr><th>Sales</th><th>Nhóm</th><th>CT T10</th><th>TH T10</th><th>Đạt %</th><th>LK 10T</th><th>Đạt %</th></tr>
+        <tr><td>Ly.tth (Leader)</td><td>1</td><td>3</td><td>3</td><td class="pct-good">100%</td><td>47</td><td class="pct-good">162%</td></tr>
+        <tr><td>Sanh.nt</td><td>1</td><td>3</td><td>0</td><td class="pct-bad">0%</td><td>14</td><td class="pct-bad">48%</td></tr>
+        <tr><td>Trang.ltb</td><td>1</td><td>3</td><td>1</td><td class="pct-bad">33%</td><td>22</td><td class="pct-warn">76%</td></tr>
+        <tr><td>Hải.nn (Leader)</td><td>2</td><td>3</td><td>1</td><td class="pct-bad">33%</td><td>19</td><td class="pct-bad">66%</td></tr>
+        <tr><td>Kiều.bto</td><td>2</td><td>3</td><td>2</td><td class="pct-warn">67%</td><td>22</td><td class="pct-warn">76%</td></tr>
+        <tr><td>Sơn.dv</td><td>2</td><td>3</td><td>1</td><td class="pct-bad">33%</td><td>15</td><td class="pct-bad">52%</td></tr>
+        <tr><td>Minh.nv</td><td>2</td><td>3</td><td>1</td><td class="pct-bad">33%</td><td>17</td><td class="pct-bad">59%</td></tr>
+        <tr><td>Hà.nn (Leader)</td><td>3</td><td>3</td><td>1</td><td class="pct-bad">33%</td><td>18</td><td class="pct-warn">62%</td></tr>
+        <tr><td>Hưng.vv</td><td>3</td><td>3</td><td>2</td><td class="pct-warn">67%</td><td>14</td><td class="pct-bad">48%</td></tr>
+        <tr><td>Hiền.đma</td><td>3</td><td>3</td><td>2</td><td class="pct-warn">67%</td><td>12</td><td class="pct-bad">41%</td></tr>
+        <tr><td>Cường.nh</td><td>3</td><td>3</td><td>2</td><td class="pct-warn">67%</td><td>9</td><td class="pct-warn">60%</td></tr>
+        <tr class="bold"><td>TỔNG</td><td></td><td>~34</td><td>16</td><td class="pct-bad">47%</td><td>209</td><td class="pct-warn">68%</td></tr>
+      </table>
+    </div>
+    <div class="panel">
+      <h3>📦 Tồn kho xe cuối T10 &amp; Lợi nhuận đầu xe</h3>
+      <table>
+        <tr><th>Dòng xe</th><th>Tồn đầu</th><th>Nhập T10</th><th>Xuất T10</th><th>Tồn cuối</th></tr>
+        <tr><td>City RS</td><td>4</td><td>8+3</td><td>6</td><td><b>9</b></td></tr>
+        <tr><td>HR-V G</td><td>9</td><td>4</td><td>5</td><td><b>8</b></td></tr>
+        <tr><td>HR-V L</td><td>2</td><td>5</td><td>0</td><td><b>7</b></td></tr>
+        <tr><td>HR-V HEV</td><td>7</td><td>1</td><td>1</td><td><b>7</b></td></tr>
+        <tr><td>BR-V G</td><td>3</td><td>1</td><td>1</td><td><b>3</b></td></tr>
+        <tr><td>BR-V L</td><td>3</td><td>2+1</td><td>1</td><td><b>5</b></td></tr>
+        <tr><td>CR-V L</td><td>3</td><td>2</td><td>1</td><td><b>4</b></td></tr>
+        <tr><td>CR-V RS HEV</td><td>4</td><td>2</td><td>1</td><td><b>5</b></td></tr>
+        <tr><td>CR-V LX HEV</td><td>1</td><td>0</td><td>0</td><td><b>1</b></td></tr>
+        <tr class="bold"><td>TỔNG</td><td>38</td><td>29</td><td>18</td><td>49</td></tr>
+      </table>
+      <div style="margin-top:12px;">
+        <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">💰 Lợi nhuận đầu xe (triệu đồng)</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;font-size:12px;">
+          <span style="background:#EEF2FF;padding:4px 10px;border-radius:6px;">City RS: <b>15,8tr</b></span>
+          <span style="background:#EEF2FF;padding:4px 10px;border-radius:6px;">HR-V G: <b>13tr</b></span>
+          <span style="background:#EEF2FF;padding:4px 10px;border-radius:6px;">HR-V HEV: <b>10,7tr</b></span>
+          <span style="background:#EEF2FF;padding:4px 10px;border-radius:6px;">BR-V G: <b>11tr</b></span>
+          <span style="background:#DCFCE7;padding:4px 10px;border-radius:6px;">BR-V L: <b style="color:var(--green)">25tr ★</b></span>
+          <span style="background:#EEF2FF;padding:4px 10px;border-radius:6px;">CR-V L: <b>21,6tr</b></span>
+          <span style="background:#DCFCE7;padding:4px 10px;border-radius:6px;">CR-V RS HEV: <b style="color:var(--green)">30tr ★</b></span>
+          <span style="background:#FEF9C3;padding:4px 10px;border-radius:6px;">BQ: <b>16,2tr</b></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>🎯 Phân tích &amp; Giải pháp T11</h3>
+    <div class="alert red"><strong>❌ Yếu:</strong> T10 chỉ bán 16/34 xe (47%). Nhóm 1 chỉ 4 xe; Sanh.nt bán 0 xe. Phụ kiện đạt 70,6% chỉ tiêu.</div>
+    <div class="alert gold"><strong>⚡ Tồn kho cao 49 xe</strong> — Nhiều xe HR-V, CR-V tồn trên 50-114 ngày. Chi phí tài chính tăng, áp lực xử lý tồn.</div>
+    <div class="alert green"><strong>✅ Điểm sáng:</strong> Bảo hiểm đạt 125% KH (20/16 xe). LK 10T phụ kiện đạt 118% KH. Ly.tth LK đạt 162%.</div>
+    <div class="alert gold"><strong>🎯 Hành động T11:</strong> (1) Mỗi Sales đặt mục tiêu ≥3 xe; (2) Chiến dịch kích cầu City/HR-V cuối năm; (3) Xử lý tồn kho xe &gt;60 ngày bằng khuyến mại phụ kiện; (4) Coach cá nhân cho Sanh.nt và các Sales dưới 60% KH LK.</div>
+  </div>
+</div>
+
+<!-- ===================== DỊCH VỤ ===================== -->
+<div id="tab-dv" class="tab-content">
+  <div class="kpi-row">
+    <div class="kpi-card green">
+      <div class="kpi-label">Lượt xe T10</div>
+      <div class="kpi-value">593</div>
+      <div class="kpi-sub"><span class="down">▼ KH: 705 — đạt 84%</span></div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">DT Dịch vụ T10</div>
+      <div class="kpi-value">1,895 tỷ</div>
+      <div class="kpi-sub"><span class="down">▼ KH: 2,236 tỷ — đạt ~85%</span></div>
+    </div>
+    <div class="kpi-card navy">
+      <div class="kpi-label">DT Luỹ kế 10T</div>
+      <div class="kpi-value">22,8 tỷ</div>
+      <div class="kpi-sub"><span class="up">▲ KH: 20,8 tỷ — đạt 110%</span></div>
+    </div>
+    <div class="kpi-card gold">
+      <div class="kpi-label">Lượt PM T10</div>
+      <div class="kpi-value">141</div>
+      <div class="kpi-sub"><span class="up">▲ Đạt 103% KH</span></div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">PM Lưu động T10</div>
+      <div class="kpi-value">75 xe</div>
+      <div class="kpi-sub"><span class="neutral">DT: 153 tr (Phú Yên+QN)</span></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <h3>📊 DT Dịch vụ T10 theo loại hình</h3>
+      <canvas id="chartDV"></canvas>
+    </div>
+    <div class="panel">
+      <h3>📈 So sánh lượt xe 2026 vs 2025</h3>
+      <canvas id="chartDVCK"></canvas>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <h3>📋 Chi tiết chỉ tiêu DV T10</h3>
+      <table>
+        <tr><th>Nội dung</th><th>ĐVT</th><th>CT T10</th><th>TH T10</th><th>Đạt %</th><th>LK 10T</th><th>Đạt %</th></tr>
+        <tr><td>Tổng lượt xe</td><td>Lượt</td><td>705</td><td>593</td><td class="pct-warn">84%</td><td>5.441</td><td class="pct-warn">85%</td></tr>
+        <tr><td>– Bảo dưỡng (PM)</td><td>Lượt</td><td>236</td><td>141</td><td class="pct-good">103%*</td><td>2.539</td><td class="pct-good">120%</td></tr>
+        <tr><td>– Sửa chữa GR</td><td>Lượt</td><td>298</td><td>292</td><td class="pct-bad">58%*</td><td>1.496</td><td class="pct-bad">55%</td></tr>
+        <tr><td>– Thân vỏ BP</td><td>Lượt</td><td>133</td><td>85</td><td class="pct-bad">62%</td><td>966</td><td class="pct-warn">73%</td></tr>
+        <tr><td>– Phụ kiện DV</td><td>Lượt</td><td>38</td><td>75</td><td class="pct-good">197%</td><td>440</td><td class="pct-good">162%</td></tr>
+        <tr><td>Tổng DT</td><td>Triệu</td><td>2.236</td><td>1.895</td><td class="pct-warn">85%</td><td>22.814</td><td class="pct-good">110%</td></tr>
+        <tr><td>– DT PM</td><td>Triệu</td><td>830</td><td>798</td><td class="pct-warn">96%</td><td>3.450</td><td class="pct-bad">45%</td></tr>
+        <tr><td>– DT GR</td><td>Triệu</td><td>387</td><td>424</td><td class="pct-good">110%</td><td>11.472</td><td class="pct-good">319%</td></tr>
+        <tr><td>– DT BP</td><td>Triệu</td><td>774</td><td>522</td><td class="pct-bad">67%</td><td>5.964</td><td class="pct-warn">83%</td></tr>
+      </table>
+      <p style="font-size:11px;color:var(--gray);margin-top:6px;">(*) Tỷ lệ có thể do cách chia KH trong file gốc — DT PM LK 10T chỉ đạt 45% KH là vấn đề cần xem lại.</p>
+    </div>
+    <div class="panel">
+      <h3>🚐 PM Lưu động Luỹ kế 10T</h3>
+      <table>
+        <tr><th>Khu vực</th><th>LX T10</th><th>DT T10 (tr)</th><th>LX LK</th><th>DT LK (tr)</th></tr>
+        <tr><td>Phú Yên</td><td>60</td><td>110</td><td>495</td><td>914,7</td></tr>
+        <tr><td>Hoài Nhơn</td><td>0</td><td>0</td><td>42</td><td>93</td></tr>
+        <tr><td>Quảng Ngãi</td><td>15</td><td>43</td><td>57</td><td>172</td></tr>
+        <tr class="bold"><td>TỔNG</td><td>75</td><td>153</td><td>594</td><td>1.179,7</td></tr>
+      </table>
+      <div class="alert gold" style="margin-top:12px;"><strong>⚡ Lưu ý:</strong> Hoài Nhơn T10 không phát sinh. Cần lên kế hoạch triển khai lại tuyến này trong T11.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== CSKH ===================== -->
+<div id="tab-cskh" class="tab-content">
+  <div class="kpi-row">
+    <div class="kpi-card green">
+      <div class="kpi-label">VIN xe DV T10</div>
+      <div class="kpi-value">418</div>
+      <div class="kpi-sub"><span class="up">▲ KH: 400 — đạt 104,5%</span></div>
+    </div>
+    <div class="kpi-card gold">
+      <div class="kpi-label">VIN LK 10T</div>
+      <div class="kpi-value">4.176</div>
+      <div class="kpi-sub"><span class="neutral">KH: 4.180 — đạt 99,9%</span></div>
+    </div>
+    <div class="kpi-card navy">
+      <div class="kpi-label">Active Rate (BĐ+PY)</div>
+      <div class="kpi-value">81,6%</div>
+      <div class="kpi-sub"><span class="down">▼ HVN giao: 2.125 xe</span></div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Thiếu Active</div>
+      <div class="kpi-value">390 xe</div>
+      <div class="kpi-sub"><span class="down">▼ Xe tuổi 5-9 rủi ro cao</span></div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">Nhược điểm DV T10</div>
+      <div class="kpi-value">12</div>
+      <div class="kpi-sub"><span class="neutral">CLSC chưa đạt: 7 trường hợp</span></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <h3>📊 Active Rate theo tuổi xe (HVN giao vs HBDH đạt)</h3>
+      <canvas id="chartActive"></canvas>
+    </div>
+    <div class="panel">
+      <h3>📈 Tăng trưởng lượt xe 2026/2025</h3>
+      <table>
+        <tr><th>Loại</th><th>T10/2025</th><th>T10/2026</th><th>Tỷ lệ</th></tr>
+        <tr><td>PM (Bảo dưỡng)</td><td>193</td><td>277</td><td class="pct-good">+43,5%</td></tr>
+        <tr><td>GR (Sửa chữa)</td><td>251</td><td>198</td><td class="pct-bad">-21,1%</td></tr>
+        <tr><td>BP (Thân vỏ)</td><td>74</td><td>94</td><td class="pct-good">+27%</td></tr>
+        <tr class="bold"><td>TỔNG</td><td>518</td><td>569</td><td class="pct-good">+9,8%</td></tr>
+      </table>
+      <div style="margin-top:12px;">
+        <div class="alert green"><strong>✅ PM tăng mạnh 43,5%</strong> — phản ánh hiệu quả PM Mobile và chăm sóc tích cực.</div>
+        <div class="alert red"><strong>⚠️ GR giảm 21%</strong> — cần phân tích nguyên nhân (mất khách, xe tự sửa ngoài?).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>🎯 Active theo Tuổi xe – Phân tích thiếu hụt</h3>
+    <table>
+      <tr><th>Tuổi xe</th><th>Năm SX</th><th>HVN giao</th><th>HBDH đạt</th><th>Thiếu</th><th>Tỷ lệ đạt</th></tr>
+      <tr><td>0</td><td>2026</td><td>214</td><td>214</td><td>0</td><td class="pct-good">100%</td></tr>
+      <tr><td>1</td><td>2025</td><td>253</td><td>251</td><td>2</td><td class="pct-good">99,2%</td></tr>
+      <tr><td>2</td><td>2024</td><td>268</td><td>240</td><td>28</td><td class="pct-warn">89,5%</td></tr>
+      <tr><td>3</td><td>2023</td><td>222</td><td>222</td><td>0</td><td class="pct-good">100%</td></tr>
+      <tr><td>4</td><td>2022</td><td>251</td><td>215</td><td>36</td><td class="pct-warn">85,8%</td></tr>
+      <tr><td>5</td><td>2021</td><td>195</td><td>148</td><td>47</td><td class="pct-bad">76,1%</td></tr>
+      <tr><td>6</td><td>2020</td><td>165</td><td>112</td><td>53</td><td class="pct-bad">67,9%</td></tr>
+      <tr><td>7</td><td>2019</td><td>294</td><td>181</td><td>113</td><td class="pct-bad">61,6%</td></tr>
+      <tr><td>8</td><td>2018</td><td>231</td><td>134</td><td>97</td><td class="pct-bad">58%</td></tr>
+      <tr><td>9</td><td>2017</td><td>33</td><td>18</td><td>15</td><td class="pct-bad">53,9%</td></tr>
+      <tr class="bold"><td>TỔNG</td><td></td><td>2.125</td><td>1.735</td><td class="pct-bad">390</td><td class="pct-warn">81,6%</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ===================== MARKETING ===================== -->
+<div id="tab-mkt" class="tab-content">
+  <div class="kpi-row">
+    <div class="kpi-card green">
+      <div class="kpi-label">Lượt xem FB T10</div>
+      <div class="kpi-value">569.524</div>
+      <div class="kpi-sub"><span class="up">▲ KH: 173.551 — đạt 328%</span></div>
+    </div>
+    <div class="kpi-card gold">
+      <div class="kpi-label">Lead FB T10</div>
+      <div class="kpi-value">28</div>
+      <div class="kpi-sub"><span class="up">▲ KH: 11 — đạt 254%</span></div>
+    </div>
+    <div class="kpi-card navy">
+      <div class="kpi-label">Chi phí QC FB T10</div>
+      <div class="kpi-value">11,78 tr</div>
+      <div class="kpi-sub"><span class="neutral">KH: 11 tr — +7%</span></div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">KH ký HĐ từ MKT</div>
+      <div class="kpi-value">3,5 KH</div>
+      <div class="kpi-sub"><span class="neutral">Đóng góp vào doanh số</span></div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Zalo T10</div>
+      <div class="kpi-value">0 bài</div>
+      <div class="kpi-sub"><span class="down">▼ KH: 3 bài — đạt 0%</span></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <h3>📊 Phễu khách hàng T10 – KH vs TH</h3>
+      <canvas id="chartPHEU"></canvas>
+    </div>
+    <div class="panel">
+      <h3>✅ Hoàn thành hoạt động Marketing T10</h3>
+      <table>
+        <tr><th>Hoạt động</th><th>CT</th><th>TH</th><th>Đạt</th></tr>
+        <tr><td>Lái thử FTP</td><td>2</td><td>2</td><td class="pct-good">✅ 100%</td></tr>
+        <tr><td>Video bán hàng</td><td>3</td><td>3</td><td class="pct-good">✅ 100%</td></tr>
+        <tr><td>PM Mobile</td><td>3</td><td>3</td><td class="pct-good">✅ 100%</td></tr>
+        <tr><td>Video DV</td><td>1</td><td>0</td><td class="pct-bad">❌ 0%</td></tr>
+        <tr><td>Fanpage</td><td>26</td><td>41</td><td class="pct-good">✅ 158%</td></tr>
+        <tr><td>Website</td><td>3</td><td>2</td><td class="pct-warn">⚠️ 67%</td></tr>
+        <tr><td>TikTok</td><td>3</td><td>3</td><td class="pct-good">✅ 100%</td></tr>
+        <tr><td>Zalo</td><td>3</td><td>0</td><td class="pct-bad">❌ 0%</td></tr>
+        <tr><td>QC FTP + PM</td><td>3</td><td>3</td><td class="pct-good">✅ 100%</td></tr>
+        <tr><td>QC bán hàng</td><td>3</td><td>4</td><td class="pct-good">✅ 133%</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>🎯 Giải pháp MKT T11</h3>
+    <div class="alert red"><strong>❌ Zalo: 0/3 bài</strong> — Cần triển khai ngay Zalo OA trong T11, giao chỉ tiêu cụ thể và kiểm tra hàng tuần.</div>
+    <div class="alert red"><strong>❌ Video DV: 0/1</strong> — Phối hợp Dịch vụ sản xuất 1 video giới thiệu dịch vụ trong T11.</div>
+    <div class="alert green"><strong>✅ Fanpage vượt 158%</strong> — Duy trì chất lượng nội dung, tăng tần suất bài đăng cuối năm.</div>
+    <div class="alert gold"><strong>🎯 T11:</strong> Chiến dịch "End-of-Year" quảng bá City/HR-V; tăng ngân sách QC FB 20%; mục tiêu 35+ Lead/tháng; triển khai Zalo 3 bài/tuần.</div>
+  </div>
+</div>
+
+<!-- ===================== THỊ TRƯỜNG ===================== -->
+<div id="tab-tt" class="tab-content">
+  <div class="kpi-row">
+    <div class="kpi-card red">
+      <div class="kpi-label">Thị phần Honda toàn quốc T9</div>
+      <div class="kpi-value">4,9%</div>
+      <div class="kpi-sub"><span class="down">▼ Giảm so CK 2025</span></div>
+    </div>
+    <div class="kpi-card gold">
+      <div class="kpi-label">Honda 9T/2026 (toàn quốc)</div>
+      <div class="kpi-value">15.707 xe</div>
+      <div class="kpi-sub"><span class="down">▼ -11,3% so CK 2025</span></div>
+    </div>
+    <div class="kpi-card navy">
+      <div class="kpi-label">HBDH 9T/2026</div>
+      <div class="kpi-value">198 xe</div>
+      <div class="kpi-sub"><span class="up">▲ +8,8% so CK 2025</span></div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">Honda T10 toàn quốc</div>
+      <div class="kpi-value">1.549 xe</div>
+      <div class="kpi-sub"><span class="down">▼ -33% so T9/2026</span></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <h3>🏆 Thị phần xe T9/2026 toàn quốc</h3>
+      <canvas id="chartTTPhan"></canvas>
+    </div>
+    <div class="panel">
+      <h3>📊 Tăng trưởng thị trường 9T (2026/2025)</h3>
+      <canvas id="chartTTTang"></canvas>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>🗺️ So sánh vùng CentralS – Tỷ lệ đạt LK 10T</h3>
+    <table>
+      <tr><th>Đại lý</th><th>Tỷ lệ đạt LK 10T</th><th>So CK 2026/2025</th><th>So CK 103KI</th><th>Nhận xét</th></tr>
+      <tr><td><b>Honda Bình Định</b></td><td class="pct-warn">82,6%</td><td class="pct-warn">95,5%</td><td class="pct-warn">85,7%</td><td>Trung bình khá</td></tr>
+      <tr><td>Honda Gia Lai</td><td class="pct-bad">55,3%</td><td class="pct-bad">71,1%</td><td class="pct-bad">80%</td><td>Yếu</td></tr>
+      <tr><td>Honda Nha Trang</td><td class="pct-good">80%</td><td class="pct-good">100%</td><td class="pct-good">100%</td><td>Tốt nhất vùng</td></tr>
+      <tr><td>Honda ĐakLak</td><td class="pct-bad">57,1%</td><td class="pct-bad">Giảm</td><td class="pct-bad">Giảm</td><td>Yếu</td></tr>
+      <tr><td>Honda Quảng Nam</td><td class="pct-bad">&gt;50%</td><td class="pct-bad">Giảm</td><td class="pct-bad">Giảm</td><td>Yếu</td></tr>
+    </table>
+    <div class="alert gold" style="margin-top:12px;"><strong>💡 Nhận xét:</strong> HBDH xếp thứ 2 vùng CentralS, chỉ sau Nha Trang. Cần học hỏi mô hình Nha Trang để cải thiện tỷ lệ về đích 103KI.</div>
+  </div>
+</div>
+
+<!-- ===================== HCNS ===================== -->
+<div id="tab-hcns" class="tab-content">
+  <div class="kpi-row">
+    <div class="kpi-card navy">
+      <div class="kpi-label">Tổng nhân sự T10</div>
+      <div class="kpi-value">59 người</div>
+      <div class="kpi-sub"><span class="neutral">Ổn định, không biến động</span></div>
+    </div>
+    <div class="kpi-card gold">
+      <div class="kpi-label">Luỹ kế NS tăng 10T</div>
+      <div class="kpi-value">15 người</div>
+      <div class="kpi-sub"><span class="neutral">Chủ yếu Dịch vụ &amp; GT khác</span></div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Luỹ kế NS giảm 10T</div>
+      <div class="kpi-value">16 người</div>
+      <div class="kpi-sub"><span class="down">▼ Dịch vụ: 8 người nghỉ</span></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <h3>👥 Cơ cấu nhân sự theo bộ phận (T10/2026)</h3>
+      <canvas id="chartNS"></canvas>
+    </div>
+    <div class="panel">
+      <h3>📋 Biến động nhân sự Luỹ kế 10T</h3>
+      <table>
+        <tr><th>Bộ phận</th><th>Đầu kỳ</th><th>NS tăng</th><th>NS giảm</th><th>Cuối kỳ</th></tr>
+        <tr><td>BGĐ</td><td>1</td><td>0</td><td>0</td><td>1</td></tr>
+        <tr><td>HCNS</td><td>8</td><td>1</td><td>1</td><td>8</td></tr>
+        <tr><td>Kinh doanh</td><td>16</td><td>2</td><td>2</td><td>16</td></tr>
+        <tr><td>Dịch vụ</td><td>28</td><td>7</td><td>8</td><td>27</td></tr>
+        <tr><td>Gián tiếp khác</td><td>7</td><td>5</td><td>5</td><td>7</td></tr>
+        <tr class="bold"><td>TỔNG</td><td>60</td><td>15</td><td>16</td><td>59</td></tr>
+      </table>
+      <div class="alert gold" style="margin-top:12px;"><strong>⚡ Lưu ý:</strong> Dịch vụ biến động nhân sự cao nhất (7 vào, 8 ra). Cần phân tích nguyên nhân nghỉ việc và cải thiện môi trường làm việc tại xưởng.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== KẾ TOÁN ===================== -->
+<div id="tab-kt" class="tab-content">
+  <div class="kpi-row">
+    <div class="kpi-card red">
+      <div class="kpi-label">Tổng công nợ T10</div>
+      <div class="kpi-value">421,4 tr</div>
+      <div class="kpi-sub"><span class="down">▼ Tổng đã thu: 0 (chưa cập nhật)</span></div>
+    </div>
+    <div class="kpi-card gold">
+      <div class="kpi-label">Nợ quá hạn 31-60 ngày</div>
+      <div class="kpi-value">154,9 tr</div>
+      <div class="kpi-sub"><span class="down">▼ 5 khoản — chiếm 36,8%</span></div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">Nợ quá hạn &gt;90 ngày</div>
+      <div class="kpi-value">34,3 tr</div>
+      <div class="kpi-sub"><span class="down">▼ 1 khoản — rủi ro khó thu</span></div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Chưa đến hạn</div>
+      <div class="kpi-value">121,7 tr</div>
+      <div class="kpi-sub"><span class="neutral">28,9% tổng công nợ</span></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <h3>📊 Phân loại công nợ T10</h3>
+      <canvas id="chartNO"></canvas>
+    </div>
+    <div class="panel">
+      <h3>📋 Chi tiết phân loại công nợ</h3>
+      <table>
+        <tr><th>Nhóm nợ</th><th>Số tiền (đồng)</th><th>Số khoản</th><th>% Tổng</th></tr>
+        <tr><td>Chưa đến hạn</td><td>121.678.014</td><td>0</td><td class="pct-good">28,9%</td></tr>
+        <tr><td>Nợ 1–30 ngày</td><td>110.514.974</td><td>12</td><td class="pct-warn">26,2%</td></tr>
+        <tr><td>Quá hạn 31–60 ngày</td><td>154.910.956</td><td>5</td><td class="pct-bad">36,8%</td></tr>
+        <tr><td>Quá hạn 61–90 ngày</td><td>0</td><td>0</td><td>0%</td></tr>
+        <tr><td>Quá hạn &gt;90 ngày</td><td>34.298.035</td><td>1</td><td class="pct-bad">8,1%</td></tr>
+        <tr class="bold"><td>TỔNG</td><td>421.401.979</td><td>18</td><td>100%</td></tr>
+      </table>
+      <div class="alert red" style="margin-top:12px;"><strong>⚠️ Rủi ro:</strong> Nợ quá hạn 31-60 ngày (154,9tr / 5 khoản) và &gt;90 ngày (34,3tr / 1 khoản) cần đôn đốc thu hồi ngay trong T11.</div>
+      <div class="alert gold"><strong>🎯 Hành động:</strong> Lập danh sách 6 khoản nợ quá hạn; giao kế toán và Sales phụ trách liên hệ trực tiếp; báo cáo tiến độ thu hồi vào cuối T11.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showTab(id){
+  document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+const RED='#E40521', NAVY='#1A2B5F', GOLD='#F5A623', GREEN='#27AE60', ORANGE='#E67E22';
+
+// TỔNG QUAN
+new Chart(document.getElementById('chartTong'),{type:'bar',data:{
+  labels:['Bán xe T10 (%KH)','Phụ kiện T10','Bảo hiểm T10','Lượt xe DV T10','VIN xe T10','DT DV LK 10T'],
+  datasets:[{label:'Tỷ lệ đạt (%)',
+    data:[47,71,125,84,105,110],
+    backgroundColor:[RED,GOLD,GREEN,GOLD,GREEN,GREEN],borderRadius:6}]
+},options:{plugins:{legend:{display:false}},scales:{y:{max:150,ticks:{callback:v=>v+'%'}}}}});
+
+// KD - Nhóm
+new Chart(document.getElementById('chartNhom'),{type:'bar',data:{
+  labels:['Nhóm 1','Nhóm 2','Nhóm 3'],
+  datasets:[
+    {label:'Chỉ tiêu',data:[10,12,12],backgroundColor:'#CBD5E1',borderRadius:4},
+    {label:'Thực hiện',data:[4,5,7],backgroundColor:[RED,ORANGE,GOLD],borderRadius:4}
+  ]
+},options:{plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true}}}});
+
+// KD - Dòng xe 103KI
+new Chart(document.getElementById('chartDong'),{type:'bar',data:{
+  labels:['Civic','City','HR-V','BR-V','CR-V'],
+  datasets:[
+    {label:'KH 103KI',data:[10,95,110,60,35],backgroundColor:'#E2E8F0',borderRadius:4},
+    {label:'TH LK 10T',data:[1,47,39,19,32],backgroundColor:[RED,GOLD,ORANGE,RED,GREEN],borderRadius:4}
+  ]
+},options:{plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true}}}});
+
+// DV - Loại hình
+new Chart(document.getElementById('chartDV'),{type:'doughnut',data:{
+  labels:['Bảo dưỡng PM','Sửa chữa GR','Thân vỏ BP','Phụ tùng+PK'],
+  datasets:[{data:[798,424,522,151],backgroundColor:[GREEN,NAVY,GOLD,ORANGE],borderWidth:2}]
+},options:{plugins:{legend:{position:'bottom'}}}});
+
+// DV - So sánh CK
+new Chart(document.getElementById('chartDVCK'),{type:'bar',data:{
+  labels:['PM','GR','BP'],
+  datasets:[
+    {label:'2025',data:[193,251,74],backgroundColor:'#CBD5E1',borderRadius:4},
+    {label:'2026',data:[277,198,94],backgroundColor:[GREEN,RED,GOLD],borderRadius:4}
+  ]
+},options:{plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true}}}});
+
+// CSKH Active
+new Chart(document.getElementById('chartActive'),{type:'bar',data:{
+  labels:['T0','T1','T2','T3','T4','T5','T6','T7','T8','T9'],
+  datasets:[
+    {label:'HVN giao',data:[214,253,268,222,251,195,165,294,231,33],backgroundColor:'#CBD5E1',borderRadius:4},
+    {label:'HBDH đạt',data:[214,251,240,222,215,148,112,181,134,18],backgroundColor:NAVY,borderRadius:4}
+  ]
+},options:{plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true}}}});
+
+// MKT phễu
+new Chart(document.getElementById('chartPHEU'),{type:'bar',data:{
+  labels:['Fanpage','Zalo','TikTok','Khách showroom','Khách SC→SR','Hotline'],
+  datasets:[
+    {label:'KH T10',data:[11,1,1,15,30,5],backgroundColor:'#CBD5E1',borderRadius:4},
+    {label:'TH T10',data:[24,3,2,10,35,2],backgroundColor:[GREEN,GREEN,GREEN,RED,GREEN,RED],borderRadius:4}
+  ]
+},options:{plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true}}}});
+
+// Thị trường
+new Chart(document.getElementById('chartTTPhan'),{type:'pie',data:{
+  labels:['Vinfast','Toyota','Honda','Mitsubishi','Kia','Mazda','Hyundai','Khác'],
+  datasets:[{data:[41.5,14.5,4.9,7.6,6.6,6.6,5.6,12.7],
+    backgroundColor:[GREEN,RED,GOLD,NAVY,'#8B5CF6',ORANGE,'#EC4899','#94A3B8'],borderWidth:2}]
+},options:{plugins:{legend:{position:'bottom'}}}});
+
+// TT Tăng trưởng
+new Chart(document.getElementById('chartTTTang'),{type:'bar',data:{
+  labels:['Vinfast','Mitsubishi','Kia','BYD','Toyota','Mazda','Ford','Hyundai','Honda'],
+  datasets:[{label:'Tăng trưởng 9T 26/25 (%)',
+    data:[60.9,30.3,30.5,56.3,5.3,8.0,15.1,-2.8,-11.3],
+    backgroundColor:[GREEN,GREEN,GREEN,GREEN,GREEN,GREEN,GREEN,GOLD,RED],borderRadius:4}]
+},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>v+'%'}}}}});
+
+// HCNS
+new Chart(document.getElementById('chartNS'),{type:'doughnut',data:{
+  labels:['Dịch vụ','Kinh doanh','HCNS','GT khác','BGĐ'],
+  datasets:[{data:[27,16,8,7,1],
+    backgroundColor:[NAVY,RED,GOLD,GREEN,ORANGE],borderWidth:2}]
+},options:{plugins:{legend:{position:'bottom'}}}});
+
+// KẾ TOÁN công nợ
+new Chart(document.getElementById('chartNO'),{type:'bar',data:{
+  labels:['Chưa đến hạn','1-30 ngày','31-60 ngày (QH)','>90 ngày (QH)'],
+  datasets:[{label:'Triệu đồng',
+    data:[121.7,110.5,154.9,34.3],
+    backgroundColor:[GREEN,GOLD,ORANGE,RED],borderRadius:6}]
+},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>v+' tr'}}}}});
+</script>
+</body>
+</html>
